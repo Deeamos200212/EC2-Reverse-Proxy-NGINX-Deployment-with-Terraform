@@ -27,21 +27,38 @@ Terraform outputs for public IP and URL
 
 It follows production patterns for modularity, security, and future extensibility.
 
+```mermaid
+flowchart TB
+    %% VPC
+    VPC["AWS VPC<br/>10.0.0.0/16"]
 
+    %% Subnets
+    PublicSubnet["Public Subnet<br/>10.0.1.0/24"]
+    PrivateSubnet["Private Subnet<br/>10.0.2.0/24"]
 
-                   AWS Cloud
-───────────────────────────────────────────────
-                    VPC (10.0.0.0/16)
-───────────────────────────────────────────────
-        │                         │
- Public Subnet             Private Subnet
- 10.0.2.0/24                10.0.1.0/24
-   │                             │
- EC2 + NGINX                (Future backend)
-   │
- Internet Gateway
-   │
- Route Table (0.0.0.0/0 → IGW)
+    %% Internet Gateway + Route Table
+    IGW["Internet Gateway"]
+    PublicRT["Public Route Table<br/>0.0.0.0/0 → IGW"]
+
+    %% EC2 + NGINX
+    EC2["EC2 Instance<br/>Amazon Linux 2<br/>NGINX Reverse Proxy<br/>(via user‑data)"]
+
+    %% Security Groups
+    SG["Security Group<br/>Allow: 80/tcp from 0.0.0.0/0"]
+
+    %% Relationships
+    VPC --> PublicSubnet
+    VPC --> PrivateSubnet
+
+    PublicSubnet --> PublicRT
+    PublicRT --> IGW
+
+    PublicSubnet --> EC2
+    EC2 --> SG
+
+    IGW --> Internet["Internet"]
+```
+
 
 
 Terraform – EC2 Reverse Proxy with NGINX (VPC, Subnets, IGW)
@@ -72,15 +89,10 @@ Public IP
 Public URL
 
 📂 Project Structure
-Code
-terraform/
-│── main.tf
-│── Providers.tf
-│── VPC.tf
-│── security_groups.tf
-│── EC2.tf
-│── outputs.tf
-│── .env
+
+
+<img width="404" height="388" alt="Screenshot 2026-05-19 151123" src="https://github.com/user-attachments/assets/b3c3a5b4-cc5a-4202-a230-2cf4c4d9bd96" />
+
 ⚙️ Prerequisites
 AWS account
 
@@ -141,22 +153,9 @@ All traffic allowed
 
 
 🏗️ Architecture Diagram (Conceptual)
-Code
-                Internet
-                    │
-            ┌────────────────┐
-            │ Internet GW    │
-            └────────────────┘
-                    │
-            ┌────────────────┐
-            │  Route Table   │
-            │ 0.0.0.0/0 → IGW│
-            └────────────────┘
-                    │
-        ┌──────────────────────────┐
-        │        Public Subnet     │
-        │   EC2 + NGINX (HTTP 80)  │
-        └──────────────────────────┘
+
+<img width="1536" height="1024" alt="Copilot_20260520_221938" src="https://github.com/user-attachments/assets/3bc72d26-1230-49cd-b6f7-ea132ee6c1f4" />
+
 
 
 📜 Outputs & Verification
